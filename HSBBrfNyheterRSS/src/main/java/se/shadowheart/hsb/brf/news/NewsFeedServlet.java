@@ -43,9 +43,11 @@ public class NewsFeedServlet extends HttpServlet {
 			try {
 				newsFeed = new NewsFeed(uriParts[0], uriParts[1]);
 			} catch (IOException | RuntimeException e) {
+				log("Failed to parse news feed: " + e.getMessage(), e);
 				newsFeed = new NewsFeed();
 			}
 		} else {
+			log("Invalid request URI: " + req.getPathInfo());
 			newsFeed = new NewsFeed();
 		}
 
