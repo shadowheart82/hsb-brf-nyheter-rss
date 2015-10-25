@@ -28,9 +28,9 @@ import org.jsoup.select.Elements;
 
 /**
  * <p>
- * Denna klass representerar ett nyhetsflöde i RSS-format för en
+ * Denna klass representerar ett nyhetsflöde i RSS 2.0-format för en
  * bostadsrättsförening hos HSB. Ett nyhetsflöde initieras med ett regionsnamn
- * och
+ * och bostadsrättsnamn.
  * </p>
  * 
  * @author Mikael Lindberg (shadowheart82 / mlindberg82@gmail.com)
@@ -174,6 +174,7 @@ public class NewsFeed {
 		addTextChildElement(item, "title", title);
 		addTextChildElement(item, "link", link);
 		addTextChildElement(item, "description", StringEscapeUtils.escapeHtml4(desc));
+		addTextChildElement(item, "guid", link).setAttribute("isPermaLink", "true");
 
 		if (date != null) {
 			addTextChildElement(item, "pubDate", dateFormatOut.format(date));
