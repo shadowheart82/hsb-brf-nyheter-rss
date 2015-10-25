@@ -27,7 +27,8 @@ import org.jsoup.nodes.Element;
 /**
  * <p>
  * Denna klass representerar ett nyhetsflöde i RSS-format för en
- * bostadsrättsförening hos HSB. Ett nyhetsflöde initieras med ett regionsnamn och 
+ * bostadsrättsförening hos HSB. Ett nyhetsflöde initieras med ett regionsnamn
+ * och
  * </p>
  * 
  * @author Mikael Lindberg (shadowheart82 / mlindberg82@gmail.com)
@@ -75,17 +76,10 @@ public class NewsFeed {
 
 	private NewsFeed(String url, String title, String description) {
 		super();
-		org.w3c.dom.Document d = documentBuilder.get().newDocument();
-		org.w3c.dom.Element rss = (org.w3c.dom.Element) d.appendChild(d.createElement("rss"));
-		org.w3c.dom.Node channel = rss.appendChild(d.createElement("channel"));
+		org.w3c.dom.Document d = createRss();
+		org.w3c.dom.Node channel = addChannel(d.getDocumentElement(), title, url, description);
 
-		rss.setAttribute("version", "2.0");
-		channel.appendChild(d.createElement("title")).setTextContent(title);
-		channel.appendChild(d.createElement("link")).setTextContent(url);
-		channel.appendChild(d.createElement("description")).setTextContent(description);
-		channel.appendChild(d.createElement("language")).setTextContent("sv");
 		addItem(channel, title, url, new Date(), description);
-
 		this.document = d;
 	}
 
@@ -96,22 +90,37 @@ public class NewsFeed {
 	private NewsFeed(URL url) throws IOException {
 		super();
 		Document document = Jsoup.connect(url.toString()).userAgent(USER_AGENT).get();
-		org.w3c.dom.Document d = documentBuilder.get().newDocument();
-		org.w3c.dom.Element rss = (org.w3c.dom.Element) d.appendChild(d.createElement("rss"));
-		org.w3c.dom.Node channel = rss.appendChild(d.createElement("channel"));
 		String title = document.select("div.brf-header-bottom-text > span").text();
-
-		rss.setAttribute("version", "2.0");
-		channel.appendChild(d.createElement("title")).setTextContent(title);
-		channel.appendChild(d.createElement("link")).setTextContent(url.toString());
-		channel.appendChild(d.createElement("description")).setTextContent("");
-		channel.appendChild(d.createElement("language")).setTextContent("sv");
+		org.w3c.dom.Document d = createRss();
+		org.w3c.dom.Node channel = addChannel(d.getDocumentElement(), title, url.toString(), "");
 
 		for (Element item : document.select("ul.itemlist > li.item")) {
 			addItem(channel, url, item.select("a.linkclickarea").first());
 		}
 
 		this.document = d;
+	}
+
+	private org.w3c.dom.Document createRss() {
+		org.w3c.dom.Document d = documentBuilder.get().newDocument();
+		org.w3c.dom.Element rss = d.createElement("rss");
+
+		rss.setAttribute("version", "2.0");
+		d.appendChild(rss);
+
+		return d;
+	}
+
+	private org.w3c.dom.Node addChannel(org.w3c.dom.Element rss, String title, String url, String description) {
+		org.w3c.dom.Document d = rss.getOwnerDocument();
+		org.w3c.dom.Node channel = rss.appendChild(d.createElement("channel"));
+
+		addTextChildElement(channel, "title", title);
+		addTextChildElement(channel, "link", url);
+		addTextChildElement(channel, "description", description);
+		addTextChildElement(channel, "language", "sv");
+
+		return channel;
 	}
 
 	private void addItem(org.w3c.dom.Node channel, URL url, Element linkclickarea) throws MalformedURLException {
@@ -147,7 +156,7 @@ public class NewsFeed {
 		return item;
 	}
 
-	private void addTextChildElement(org.w3c.dom.Element node, String name, String text) {
+	private void addTextChildElement(org.w3c.dom.Node node, String name, String text) {
 		if (text != null) {
 			node.appendChild(node.getOwnerDocument().createElement(name)).setTextContent(text);
 		}
@@ -159,9 +168,9 @@ public class NewsFeed {
 
 	private static String getStackTrace(Throwable t) {
 		StringWriter buffer = new StringWriter();
-		
+
 		t.printStackTrace(new PrintWriter(buffer));
-		
+
 		return buffer.toString();
 	}
 
