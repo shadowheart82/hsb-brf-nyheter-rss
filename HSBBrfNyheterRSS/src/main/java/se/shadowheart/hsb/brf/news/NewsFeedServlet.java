@@ -21,6 +21,11 @@ import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.lang3.StringUtils;
 
 /**
+ * <p>
+ * Servlet som läser HTML-innehållet på en nyhetssida för en HSB
+ * bostadsrättsförening, och omvandlar till RSS 2.0-format
+ * </p>
+ * 
  * @author Mikael Lindberg (shadowheart82 / mlindberg82@gmail.com)
  * @version 1.0
  */
@@ -44,7 +49,7 @@ public class NewsFeedServlet extends HttpServlet {
 				newsFeed = new NewsFeed(uriParts[0], uriParts[1]);
 			} catch (IOException | RuntimeException e) {
 				log("Failed to parse news feed: " + e.getMessage(), e);
-				newsFeed = new NewsFeed();
+				newsFeed = new NewsFeed(uriParts[0], uriParts[1], e);
 			}
 		} else {
 			log("Invalid request URI: " + req.getPathInfo());
