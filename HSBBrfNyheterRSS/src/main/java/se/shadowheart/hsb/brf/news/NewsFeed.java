@@ -173,7 +173,7 @@ public class NewsFeed {
 
 		addTextChildElement(item, "title", title);
 		addTextChildElement(item, "link", link);
-		addTextChildElement(item, "description", desc);
+		addTextChildElement(item, "description", StringEscapeUtils.escapeHtml4(desc));
 
 		if (date != null) {
 			addTextChildElement(item, "pubDate", dateFormatOut.format(date));
