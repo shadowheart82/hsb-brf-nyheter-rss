@@ -43,6 +43,7 @@ public class NewsFeed {
 
 	private final SimpleDateFormat dateFormatIn = new SimpleDateFormat("dd MMMM yyyy", new Locale("sv"));
 	private final DateFormat dateFormatOut = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss XXX", new Locale("en"));
+	private final DateFormat dateFormatGUID = new SimpleDateFormat("yyyy-MM-dd", new Locale("en"));
 
 	private static final ThreadLocal<DocumentBuilder> documentBuilder = new ThreadLocal<DocumentBuilder>() {
 
@@ -81,7 +82,7 @@ public class NewsFeed {
 		org.w3c.dom.Document d = createRss();
 		org.w3c.dom.Node channel = addChannel(d.getDocumentElement(), title, url, description);
 
-		addItem(channel, title, url, new Date(), description);
+		addItem(channel, title, null, new Date(), description);
 		this.document = d;
 	}
 
@@ -174,7 +175,14 @@ public class NewsFeed {
 		addTextChildElement(item, "title", title);
 		addTextChildElement(item, "link", link);
 		addTextChildElement(item, "description", StringEscapeUtils.escapeHtml4(desc));
-		addTextChildElement(item, "guid", link).setAttribute("isPermaLink", "true");
+
+		if (link != null) {
+			if (date != null) {
+				addTextChildElement(item, "guid", link + "#" + dateFormatGUID.format(date));
+			} else {
+				addTextChildElement(item, "guid", link);
+			}
+		}
 
 		if (date != null) {
 			addTextChildElement(item, "pubDate", dateFormatOut.format(date));
