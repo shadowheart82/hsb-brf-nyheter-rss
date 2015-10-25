@@ -13,6 +13,7 @@ import java.net.URLEncoder;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
@@ -141,11 +142,21 @@ public class NewsFeed {
 	private org.w3c.dom.Node addChannel(org.w3c.dom.Element rss, String title, String url, String description) {
 		org.w3c.dom.Document d = rss.getOwnerDocument();
 		org.w3c.dom.Node channel = rss.appendChild(d.createElement("channel"));
+		org.w3c.dom.Element image;
 
 		addTextChildElement(channel, "title", title);
 		addTextChildElement(channel, "link", url);
 		addTextChildElement(channel, "description", description);
 		addTextChildElement(channel, "language", "sv");
+		addTextChildElement(channel, "copyright", "Copyright " + Calendar.getInstance().get(Calendar.YEAR) + ", HSB");
+
+		image = d.createElement("image");
+		addTextChildElement(image, "title", "HSB");
+		addTextChildElement(image, "link", url);
+		addTextChildElement(image, "url", "http://www.hsb.se/globalassets/centralt-innehall/media/logo/hsblogo.png");
+		addTextChildElement(image, "width", "181");
+		addTextChildElement(image, "height", "132");
+		channel.appendChild(image);
 
 		return channel;
 	}
