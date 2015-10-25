@@ -23,6 +23,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 /**
  * <p>
@@ -124,14 +125,14 @@ public class NewsFeed {
 	}
 
 	private void addItem(org.w3c.dom.Node channel, URL url, Element linkclickarea) throws MalformedURLException {
-		Element iteminformation = linkclickarea.select("div.iteminformation").first();
-		String title = iteminformation.select("h3").first().text();
-		String link = linkclickarea.attr("href");
+		Element iteminformation = select(linkclickarea, "div.iteminformation").first();
+		String title = selectFirstText(iteminformation, "h3");
+		String link = attr(linkclickarea, "href");
 		Date date;
-		String description = iteminformation.select("div.itemdescription").first().text();
+		String description = selectFirstText(iteminformation, "div.itemdescription");
 
 		try {
-			date = dateFormatIn.parse(iteminformation.select("div.itemdate").first().text());
+			date = dateFormatIn.parse(selectFirstText(iteminformation, "div.itemdate"));
 		} catch (ParseException | RuntimeException e) {
 			date = null;
 		}
@@ -164,6 +165,32 @@ public class NewsFeed {
 
 	private static URL createURL(String region, String brf) throws MalformedURLException, UnsupportedEncodingException {
 		return new URL(String.format(URL_PATTERN, URLEncoder.encode(region, "UTF-8"), URLEncoder.encode(brf, "UTF-8")));
+	}
+
+	private String attr(Element element, String attributeKey) {
+		if (element != null) {
+			return element.attr(attributeKey);
+		} else {
+			return null;
+		}
+	}
+
+	private Elements select(Element element, String cssQuery) {
+		if (element != null) {
+			return element.select(cssQuery);
+		} else {
+			return new Elements();
+		}
+	}
+
+	private String selectFirstText(Element element, String cssQuery) {
+		Element child = select(element, cssQuery).first();
+
+		if (child != null) {
+			return child.text();
+		} else {
+			return null;
+		}
 	}
 
 	private static String getStackTrace(Throwable t) {
