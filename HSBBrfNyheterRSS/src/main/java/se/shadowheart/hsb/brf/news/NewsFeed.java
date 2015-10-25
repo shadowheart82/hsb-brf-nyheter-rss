@@ -20,6 +20,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -94,12 +95,36 @@ public class NewsFeed {
 		String title = document.select("div.brf-header-bottom-text > span").text();
 		org.w3c.dom.Document d = createRss();
 		org.w3c.dom.Node channel = addChannel(d.getDocumentElement(), title, url.toString(), "");
+		org.w3c.dom.Node refChild = channel.getLastChild();
+		org.w3c.dom.Node newChild;
+		Date lastBuildDate = null;
 
 		for (Element item : document.select("ul.itemlist > li.item")) {
-			addItem(channel, url, item.select("a.linkclickarea").first());
+			lastBuildDate = maxDate(lastBuildDate, addItem(channel, url, item.select("a.linkclickarea").first()));
 		}
 
+		refChild = refChild.getNextSibling();
+
+		if (lastBuildDate != null) {
+			newChild = addTextChildElement(channel, "lastBuildDate", dateFormatOut.format(lastBuildDate));
+			channel.insertBefore(newChild, refChild);
+		}
+
+		channel.insertBefore(addTextChildElement(channel, "ttl", "60"), refChild);
+
 		this.document = d;
+	}
+
+	private Date maxDate(Date date1, Date date2) {
+		if (date1 == null) {
+			return date2;
+		} else if (date2 == null) {
+			return date1;
+		} else if (date1.compareTo(date2) > 0) {
+			return date1;
+		} else {
+			return date2;
+		}
 	}
 
 	private org.w3c.dom.Document createRss() {
@@ -124,7 +149,7 @@ public class NewsFeed {
 		return channel;
 	}
 
-	private void addItem(org.w3c.dom.Node channel, URL url, Element linkclickarea) throws MalformedURLException {
+	private Date addItem(org.w3c.dom.Node channel, URL url, Element linkclickarea) throws MalformedURLException {
 		Element iteminformation = select(linkclickarea, "div.iteminformation").first();
 		String title = selectFirstText(iteminformation, "h3");
 		String link = attr(linkclickarea, "href");
@@ -138,6 +163,8 @@ public class NewsFeed {
 		}
 
 		addItem(channel, title, new URL(url, link).toString(), date, description);
+
+		return date;
 	}
 
 	private org.w3c.dom.Element addItem(org.w3c.dom.Node channel, String title, String link, Date date, String desc) {
@@ -157,10 +184,15 @@ public class NewsFeed {
 		return item;
 	}
 
-	private void addTextChildElement(org.w3c.dom.Node node, String name, String text) {
+	private org.w3c.dom.Element addTextChildElement(org.w3c.dom.Node node, String name, String text) {
+		org.w3c.dom.Element child = null;
+
 		if (text != null) {
-			node.appendChild(node.getOwnerDocument().createElement(name)).setTextContent(text);
+			child = node.getOwnerDocument().createElement(name);
+			node.appendChild(child).setTextContent(text);
 		}
+
+		return child;
 	}
 
 	private static URL createURL(String region, String brf) throws MalformedURLException, UnsupportedEncodingException {
