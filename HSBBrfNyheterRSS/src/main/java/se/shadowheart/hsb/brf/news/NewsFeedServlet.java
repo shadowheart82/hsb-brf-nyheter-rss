@@ -19,6 +19,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jsoup.HttpStatusException;
 
 /**
  * <p>
@@ -47,9 +48,14 @@ public class NewsFeedServlet extends HttpServlet {
 		if (uriParts != null && uriParts.length == 2) {
 			try {
 				newsFeed = new NewsFeed(uriParts[0], uriParts[1]);
-			} catch (IOException | RuntimeException e) {
+			} catch (HttpStatusException e) {
 				log("Failed to parse news feed: " + e.getMessage(), e);
-				newsFeed = new NewsFeed(uriParts[0], uriParts[1], e);
+				resp.sendError(e.getStatusCode(), "Error loading news");
+				return;
+			} catch (RuntimeException | IOException e) {
+				log("Failed to parse news feed: " + e.getMessage(), e);
+				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error loading news");
+				return;
 			}
 		} else {
 			log("Invalid request URI: " + req.getPathInfo());

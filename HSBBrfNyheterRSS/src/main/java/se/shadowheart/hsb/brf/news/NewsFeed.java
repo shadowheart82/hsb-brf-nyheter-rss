@@ -70,12 +70,12 @@ public class NewsFeed {
 		this("", "FEL: Inga nyheter hittades", "FEL: Inga nyheter hittades");
 	}
 
-	public NewsFeed(String region, String brf, Throwable t) throws IOException {
+	public NewsFeed(String region, String brf, Throwable t) {
 		this(region, brf, t.getLocalizedMessage(), getStackTrace(t));
 	}
 
-	private NewsFeed(String region, String brf, String title, String description) throws IOException {
-		this(createURL(region, brf).toString(), title, description);
+	private NewsFeed(String region, String brf, String title, String description) {
+		this(toString(createURL(region, brf)), title, description);
 	}
 
 	private NewsFeed(String url, String title, String description) {
@@ -93,10 +93,10 @@ public class NewsFeed {
 
 	private NewsFeed(URL url) throws IOException {
 		super();
-		Document document = Jsoup.connect(url.toString()).userAgent(USER_AGENT).get();
+		Document document = Jsoup.connect(toString(url)).userAgent(USER_AGENT).get();
 		String title = document.select("div.brf-header-bottom-text > span").text();
 		org.w3c.dom.Document d = createRss();
-		org.w3c.dom.Node channel = addChannel(d.getDocumentElement(), title, url.toString(), "");
+		org.w3c.dom.Node channel = addChannel(d.getDocumentElement(), title, toString(url), "");
 		org.w3c.dom.Node refChild = channel.getLastChild();
 		org.w3c.dom.Node newChild;
 		Date lastBuildDate = null;
@@ -174,7 +174,11 @@ public class NewsFeed {
 			date = null;
 		}
 
-		addItem(channel, title, new URL(url, link).toString(), date, description);
+		if (url != null) {
+			addItem(channel, title, toString(new URL(url, link)), date, description);
+		} else {
+			addItem(channel, title, null, date, description);
+		}
 
 		return date;
 	}
@@ -215,8 +219,19 @@ public class NewsFeed {
 		return child;
 	}
 
-	private static URL createURL(String region, String brf) throws MalformedURLException, UnsupportedEncodingException {
-		return new URL(String.format(URL_PATTERN, URLEncoder.encode(region, "UTF-8"), URLEncoder.encode(brf, "UTF-8")));
+	@SuppressWarnings("deprecation")
+	private static URL createURL(String region, String brf) {
+		try {
+			try {
+				region = URLEncoder.encode(region, "UTF-8");
+				brf = URLEncoder.encode(brf, "UTF-8");
+				return new URL(String.format(URL_PATTERN, region, brf));
+			} catch (UnsupportedEncodingException e) {
+				return new URL(String.format(URL_PATTERN, URLEncoder.encode(region), URLEncoder.encode(brf)));
+			}
+		} catch (MalformedURLException e) {
+			return null;
+		}
 	}
 
 	private String attr(Element element, String attributeKey) {
@@ -243,6 +258,10 @@ public class NewsFeed {
 		} else {
 			return null;
 		}
+	}
+
+	private static String toString(URL url) {
+		return (url == null) ? null : url.toString();
 	}
 
 	private static String getStackTrace(Throwable t) {
